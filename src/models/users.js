@@ -11,4 +11,4 @@ const userSchema = new mongoose.Schema(
   { collection: 'users' } // Explicit collection name
 );
 
-module.exports = mongoose.model('User', userSchema);
+module.exports = mongoose.model('User', userSchema); // Export with singular form (User)

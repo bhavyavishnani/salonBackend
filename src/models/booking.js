@@ -7,8 +7,8 @@ const serviceSchema = new mongoose.Schema({
 });
 
 const bookingSchema = new mongoose.Schema({
-  salonId: { type: mongoose.Schema.Types.ObjectId, ref: 'Salon', required: true },
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  salonId: { type: mongoose.Schema.Types.ObjectId, ref: 'salons', required: true },
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'users', required: true },
   service: { type: serviceSchema, required: true },
   slot: { type: String, required: true },
   date: { type: Date, required: true },
@@ -16,4 +16,4 @@ const bookingSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now }
 }, { collection: 'bookings' });
 
-module.exports = mongoose.model('Booking', bookingSchema);
+module.exports = mongoose.model('bookings', bookingSchema);

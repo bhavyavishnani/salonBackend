@@ -1,29 +1,33 @@
+// salonModel.js
 const mongoose = require('mongoose');
 
-const serviceSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  price: { type: Number, required: true },
-  duration: { type: String, required: true }
-});
-
 const salonSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  owner: { type: String, required: true },
-  email: { type: String },
-  phone: { type: String },
-  address: { type: String, required: true },
-  city: { type: String, required: true },
-  location: { lat: Number, lng: Number },
-  rating: { type: Number, default: 0 },
-  reviews: { type: Number, default: 0 },
-  services: [serviceSchema],
-  images: [String],
-  working_hours: String,
-  verified: { type: Boolean, default: false },
-  seats: { type: Number, required: true },
-  bookedSeats: { type: Number, default: 0 },
-  nextAvailableSlot: String,
-  createdAt: { type: Date, default: Date.now }
-}, { collection: 'salons' });
+    name: { type: String, required: true },
+    owner: { type: String, required: true },
+    email: { type: String, required: true },
+    phone: { type: String, required: true },
+    address: { type: String, required: true },
+    city: { type: String, required: true },
+    location: {
+        lat: { type: Number },
+        lng: { type: Number }
+    },
+    rating: { type: Number },
+    reviews: { type: Number },
+    services: [
+        {
+            name: String,
+            price: Number,
+            duration: String
+        }
+    ],
+    images: [String],
+    working_hours: { type: String },
+    verified: { type: Boolean },
+    seats: { type: Number },
+    bookedSeats: { type: Number },
+    nextAvailableSlot: { type: String }
+}, { timestamps: true });
 
-module.exports = mongoose.model('Salon', salonSchema);
+const Salon = mongoose.model('Salon', salonSchema);
+module.exports = Salon;

@@ -1,14 +1,16 @@
 const express = require('express');
 const router = express.Router();
-const { MongoClient, ObjectId } = require('mongodb');  // Correctly import ObjectId
+const mongoose = require('mongoose');
 const auth = require('../middleware/auth');
 const { body, validationResult } = require('express-validator');
-require('dotenv').config();  // Load environment variables from .env
+require('dotenv').config();
 
-// Get the MongoDB URI and database name from the .env file
-const uri = process.env.MONGODB_URI;
-const dbName = "<dbname>";  // Fetch the database name from .env
+// Mongoose models (import the schemas defined earlier)
+const Salon = require('../models/salon'); // Salon model
+const User = require('../models/users');   // User model
+const Booking = require('../models/booking'); // Booking model
 
+// Validation for booking
 const validateBooking = [
   body('salonId').notEmpty().withMessage('Salon ID is required'),
   body('userId').notEmpty().withMessage('User ID is required'),
@@ -25,33 +27,18 @@ const validateBooking = [
 
 router.post('/', auth, validateBooking, async (req, res) => {
   try {
-    // Log the number of salons and users
-    const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
-    await client.connect();
-    const db = client.db(dbName);
-
-    const salonCollection = db.collection('salons');
-    const userCollection = db.collection('users');
-
-    const salonCount = await salonCollection.countDocuments();  // Count number of salons
-    const userCount = await userCollection.countDocuments();    // Count number of users
-    console.log('Number of Salons:', salonCount);
-    console.log('Number of Users:', userCount);
-
+    // Check for validation errors
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
 
+    // Extract and validate the booking data from the request body
     const { salonId, userId, service, slot, date } = req.body;
 
-    // Log the values of salonId and userId
-    console.log('Salon ID:', salonId);
-    console.log('User ID:', userId);
-
-    // Find the salon and user documents using their IDs
-    const salon = await salonCollection.findOne({ _id: new ObjectId(salonId) });
-    const user = await userCollection.findOne({ _id: new ObjectId(userId) });
+    // Find the salon and user using Mongoose models
+    const salon = await Salon.findById(salonId);
+    const user = await User.findById(userId);
 
     if (!salon) {
       return res.status(404).json({ error: 'Salon not found' });
@@ -68,44 +55,35 @@ router.post('/', auth, validateBooking, async (req, res) => {
 
     // Validate the booking time within working hours
     const [startTime, endTime] = salon.working_hours.split(' - ');
-    const bookingTime = new Date(`1970-01-01 ${slot.replace(/(\d+):(\d+)\s?(AM|PM)/i, '$1:$2 $3')}`);
+    const bookingTime = new Date(`1970-01-01 ${slot}`);
     const start = new Date(`1970-01-01 ${startTime}`);
     const end = new Date(`1970-01-01 ${endTime}`);
+    
     if (bookingTime < start || bookingTime > end) {
       return res.status(400).json({ error: 'Slot outside working hours' });
     }
 
     // Check if the slot is already booked
-    const existingBooking = await db.collection('bookings').findOne({ salonId, slot, date });
+    const existingBooking = await Booking.findOne({ salonId, slot, date });
     if (existingBooking) {
       return res.status(400).json({ error: 'Slot already booked' });
     }
 
-    // Begin transaction
-    const session = client.startSession();
-    session.startTransaction();
-    try {
-      // Update salon bookedSeats and next available slot
-      salon.bookedSeats += 1;
-      const nextSlot = new Date(bookingTime);
-      nextSlot.setHours(nextSlot.getHours() + 1);
-      salon.nextAvailableSlot = nextSlot.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
-      await salonCollection.updateOne({ _id: new ObjectId(salonId) }, { $set: { bookedSeats: salon.bookedSeats, nextAvailableSlot: salon.nextAvailableSlot } }, { session });
+    // Update salon bookedSeats and next available slot using Mongoose
+    salon.bookedSeats += 1;
+    const nextSlot = new Date(bookingTime);
+    nextSlot.setHours(nextSlot.getHours() + 1);
+    salon.nextAvailableSlot = nextSlot.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
 
-      // Create a booking
-      const booking = { salonId, userId, service, slot, date };
-      await db.collection('bookings').insertOne(booking, { session });
+    // Save the updated salon information
+    await salon.save();
 
-      // Commit transaction
-      await session.commitTransaction();
-      res.status(201).json(booking);
-    } catch (error) {
-      await session.abortTransaction();
-      throw error;
-    } finally {
-      session.endSession();
-      client.close();
-    }
+    // Create a booking using Mongoose model
+    const booking = new Booking({ salonId, userId, service, slot, date });
+    await booking.save();
+
+    // Return the booking data
+    res.status(201).json(booking);
   } catch (error) {
     console.error('Booking error:', error);
     res.status(500).json({ error: 'Server error, please try again' });

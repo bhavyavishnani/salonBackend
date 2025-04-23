@@ -1,18 +1,17 @@
+const mongoose = require('mongoose');
 require('dotenv').config();
-const { MongoClient } = require('mongodb');
 
-const uri = process.env.MONGODB_URI;
-const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
-
-async function connectDB() {
-    try {
-        await client.connect();
-        console.log('MongoDB se connect ho gaya!');
-        return client.db('<dbname>'); // Apna database name yahan daal
-    } catch (error) {
-        console.error('MongoDB connect nahi hua:', error);
-        throw error;
-    }
-}
+const connectDB = async () => {
+  try {
+    await mongoose.connect(process.env.MONGODB_URI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
+    console.log('Mongoose connected!');
+  } catch (error) {
+    console.error('Connection error:', error.message);
+    process.exit(1);
+  }
+};
 
 module.exports = connectDB;
