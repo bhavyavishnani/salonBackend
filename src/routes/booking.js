@@ -79,8 +79,10 @@ router.post('/', auth, validateBooking, async (req, res) => {
     await salon.save();
 
     // Create a booking using Mongoose model
-    const booking = new Booking({ salonId, userId, service, slot, date });
+    const booking = new Booking({ salonId, userId, service, slot, date, status: "confirmed" });
     await booking.save();
+    await User.findByIdAndUpdate(userId, { $push: { bookings: booking._id } });
+    await Salon.findByIdAndUpdate(salonId, { $push: { bookings: booking._id } });
 
     // Return the booking data
     res.status(201).json(booking);

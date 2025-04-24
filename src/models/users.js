@@ -7,6 +7,7 @@ const userSchema = new mongoose.Schema(
     customerName: { type: String, required: true },
     password: { type: String, required: true }, // Assuming password is hashed
     createdAt: { type: Date, default: Date.now },
+    bookings: [{ type: mongoose.Schema.Types.ObjectId, ref: 'bookings' }]
   },
   { collection: 'users' } // Explicit collection name
 );

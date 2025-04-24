@@ -1,43 +1,53 @@
 const express = require('express');
 const router = express.Router();
-const connectDB = require('../config/db');
 const bcrypt = require('bcryptjs');
+const User = require('../models/users'); // Mongoose model
 
 router.post('/signup', async (req, res) => {
     try {
         const { phoneNumber, customerName, password } = req.body;
+
+        // Basic validation
         if (!phoneNumber || !customerName || !password) {
             return res.status(400).json({ error: 'Phone number, customer name, aur password zaroori hain!' });
         }
+
         if (!/^\d{10}$/.test(phoneNumber)) {
             return res.status(400).json({ error: 'Phone number 10 digits ka hona chahiye!' });
         }
+
         if (password.length < 6) {
             return res.status(400).json({ error: 'Password kam se kam 6 characters ka hona chahiye!' });
         }
 
-        const db = await connectDB();
-        const existingUser = await db.collection('users').findOne({ phoneNumber });
+        // Check if user already exists
+        const existingUser = await User.findOne({ phoneNumber });
         if (existingUser) {
             return res.status(400).json({ error: 'Ye phone number already registered hai!' });
         }
 
-        const saltRounds = 10;
-        const hashedPassword = await bcrypt.hash(password, saltRounds);
+        // Hash the password
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
 
-        const newUser = {
+        // Create new user
+        const newUser = new User({
             phoneNumber,
             customerName,
             password: hashedPassword,
-            createdAt: new Date()
-        };
-        await db.collection('users').insertOne(newUser);
+        });
+
+        await newUser.save();
 
         res.status(201).json({
             message: 'Signup successful!',
-            data: { phoneNumber, customerName },
+            user: {
+                phoneNumber: newUser.phoneNumber,
+                customerName: newUser.customerName,
+            },
             status: 'success'
         });
+
     } catch (error) {
         console.error('Signup error:', error);
         res.status(500).json({

@@ -26,7 +26,8 @@ const salonSchema = new mongoose.Schema({
     verified: { type: Boolean },
     seats: { type: Number },
     bookedSeats: { type: Number },
-    nextAvailableSlot: { type: String }
+    nextAvailableSlot: { type: String },
+    bookings: [{ type: mongoose.Schema.Types.ObjectId, ref: 'bookings' }]
 }, { timestamps: true });
 
 const Salon = mongoose.model('Salon', salonSchema);

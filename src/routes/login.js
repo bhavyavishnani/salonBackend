@@ -1,11 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const connectDB = require('../config/db');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-require('dotenv').config(); // Load environment variables
+const User = require('../models/users'); // ✅ Use the Mongoose model
+require('dotenv').config();
 
-const JWT_SECRET = process.env.JWT_SECRET; // JWT secret from .env
+const JWT_SECRET = process.env.JWT_SECRET;
 
 router.post('/login', async (req, res) => {
     try {
@@ -15,8 +15,7 @@ router.post('/login', async (req, res) => {
             return res.status(400).json({ error: 'Phone number aur password chahiye!' });
         }
 
-        const db = await connectDB();
-        const user = await db.collection('users').findOne({ phoneNumber });
+        const user = await User.findOne({ phoneNumber }); // ✅ Using Mongoose here
 
         if (!user) {
             return res.status(404).json({ error: 'User nahi mila!' });
