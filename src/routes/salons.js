@@ -1,45 +1,27 @@
 const express = require('express');
-const { MongoClient } = require('mongodb');
-const dotenv = require('dotenv');
-dotenv.config();
-
 const router = express.Router();
+const Salon = require('../models/salon'); // apne Salon schema ka path
 
-// Get the MongoDB URI from the .env file
-const uri = process.env.MONGODB_URI;
-const dbName = "<dbname>";  // Replace with your database name
-const collectionName = "salons";  // Your collection name
-
-// Route to get all salons
+// Route to get salons, optionally filtered by city
 router.get('/', async (req, res) => {
-  const city = req.query.city ? req.query.city.trim() : '';
-
-  const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
-
   try {
-    await client.connect();
-    console.log("Connected to MongoDB");
+    const city = req.query.city ? req.query.city.trim() : '';
 
-    const db = client.db(dbName);
-    const collection = db.collection(collectionName);
-
-    let query = {};
+    let filter = {};
     if (city) {
-      query.city = { $regex: new RegExp(city, 'i') };  // Case-insensitive search
+      filter.city = { $regex: new RegExp(city, 'i') }; // Case-insensitive search
     }
 
-    const salons = await collection.find(query).toArray();
-    
+    const salons = await Salon.find(filter);
+
     if (salons.length === 0) {
-      return res.status(404).json({ message: 'No salons found' });
+      return res.status(404).json({ message: 'Koi salons nahi mile is city mein.' });
     }
 
-    res.json(salons);
+    res.status(200).json({ success: true, salons });
   } catch (error) {
     console.error("Error fetching salons:", error);
-    res.status(500).json({ error: 'Something went wrong' });
-  } finally {
-    await client.close();
+    res.status(500).json({ success: false, message: 'Server error' });
   }
 });
 

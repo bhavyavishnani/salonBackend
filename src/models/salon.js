@@ -1,34 +1,36 @@
-// salonModel.js
 const mongoose = require('mongoose');
 
 const salonSchema = new mongoose.Schema({
-    name: { type: String, required: true },
-    owner: { type: String, required: true },
-    email: { type: String, required: true },
-    phone: { type: String, required: true },
-    address: { type: String, required: true },
-    city: { type: String, required: true },
-    location: {
-        lat: { type: Number },
-        lng: { type: Number }
-    },
-    rating: { type: Number },
-    reviews: { type: Number },
-    services: [
-        {
-            name: String,
-            price: Number,
-            duration: String
-        }
-    ],
-    images: [String],
-    working_hours: { type: String },
-    verified: { type: Boolean },
-    seats: { type: Number },
-    bookedSeats: { type: Number },
-    nextAvailableSlot: { type: String },
-    bookings: [{ type: mongoose.Schema.Types.ObjectId, ref: 'bookings' }]
+  name: { type: String, required: true },
+  owner: { type: String, required: true },
+  email: { type: String },
+  phone: { type: String },
+  address: { type: String },
+  city: { type: String },
+  location: {
+    latitude: { type: Number },
+    longitude: { type: Number }
+  },
+  rating: { type: Number, default: 0 },
+  reviews: [{ 
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    reviewText: String,
+    rating: Number,
+    createdAt: { type: Date, default: Date.now }
+  }],
+  services: [{
+    name: String,
+    price: Number,
+    duration: String,
+  }],
+  images: [String],
+  workingHours: {
+    openingTime: String,
+    closingTime: String,
+  },
+  isVerified: { type: Boolean, default: false }
 }, { timestamps: true });
 
 const Salon = mongoose.model('Salon', salonSchema);
+
 module.exports = Salon;

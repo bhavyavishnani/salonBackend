@@ -7,6 +7,8 @@ const salonsRouter = require('./salons');
 const bookingRouter = require('./booking');
 const paymentRouter = require('./payment');
 const verifyPaymentRouter = require('./verifyPayment');
+const createSalonRouter = require('./createSalon');
+const getSalonRouter = require('./getSalon');
 
 router.get('/test', async (req, res) => {
     res.send('BACKEND IS RUNNING SMOOTHLY🕺🏻🥳');
@@ -18,5 +20,6 @@ router.use('/salons', salonsRouter);
 router.use('/booking', bookingRouter);
 router.use('/payment', paymentRouter);
 router.use('/', verifyPaymentRouter);
-
+router.use('/', createSalonRouter);
+router.use('/salons', getSalonRouter);
 module.exports = router;
