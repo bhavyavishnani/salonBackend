@@ -44,6 +44,7 @@ router.post('/signup', async (req, res) => {
             user: {
                 phoneNumber: newUser.phoneNumber,
                 customerName: newUser.customerName,
+                userId: newUser.id
             },
             status: 'success'
         });
