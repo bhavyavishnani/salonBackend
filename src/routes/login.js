@@ -37,7 +37,8 @@ router.post('/login', async (req, res) => {
             token,
             user: {
                 phoneNumber: user.phoneNumber,
-                customerName: user.customerName
+                customerName: user.customerName,
+                userId: user.id
             }
         });
     } catch (error) {
