@@ -3,15 +3,14 @@ const router = express.Router();
 const Booking = require('../models/booking');
 const Salon = require('../models/salon');
 
-
 // POST /api/bookings
 router.post('/', async (req, res) => {
   try {
-    const { salonId, userId, serviceId, slot, date } = req.body;
+    const { salonId, userId, serviceIds, slot, date } = req.body;
 
     // Validate required fields
-    if (!salonId || !userId || !serviceId || !slot || !date) {
-      return res.status(400).json({ message: 'All fields are required.' });
+    if (!salonId || !userId || !Array.isArray(serviceIds) || serviceIds.length === 0 || !slot || !date) {
+      return res.status(400).json({ message: 'All fields are required, including an array of serviceIds.' });
     }
 
     // Check if salon exists
@@ -20,19 +19,31 @@ router.post('/', async (req, res) => {
       return res.status(404).json({ message: 'Salon not found.' });
     }
 
-    // Check if serviceId exists in that salon's services array
-    const service = salon.services.find(s => s._id.toString() === serviceId);
-    if (!service) {
-      return res.status(400).json({ message: 'Service not found in this salon.' });
+    // Validate all serviceIds exist in salon.services
+    const invalidServices = serviceIds.filter(
+      id => !salon.services.find(s => s._id && s._id.toString() === id)
+    );
+
+
+    if (invalidServices.length > 0) {
+      return res.status(400).json({ message: 'One or more service IDs are invalid for this salon', invalidServices });
     }
+
+    // Optional: calculate total price
+    const selectedServices = salon.services.filter(
+  s => s._id && serviceIds.includes(s._id.toString())
+);
+
+    const totalPrice = selectedServices.reduce((acc, s) => acc + s.price, 0);
 
     // Create booking
     const newBooking = new Booking({
       salonId,
       userId,
-      serviceId,
+      serviceIds,
       slot,
       date: new Date(date),
+      totalAmount: totalPrice // optional field if your schema allows
     });
 
     await newBooking.save();
