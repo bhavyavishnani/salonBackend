@@ -22,6 +22,7 @@ const salonSchema = new mongoose.Schema({
     name: String,
     price: Number,
     duration: String,
+    _id: String
   }],
   images: [String],
   workingHours: {
